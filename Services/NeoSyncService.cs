@@ -46,7 +46,11 @@ public class NeoSyncService
                     continue;
                 }
 
-                if (!DateTime.TryParse(approach.CloseApproachDate, CultureInfo.InvariantCulture, DateTimeStyles.None, out var closeApproachDate))
+                if (!DateTime.TryParse(
+                    approach.CloseApproachDate,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                    out var closeApproachDate))
                 {
                     continue;
                 }
