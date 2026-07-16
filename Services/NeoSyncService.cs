@@ -6,11 +6,13 @@ public class NeoSyncService
 {
     private readonly HttpClient _client;
     private readonly NeoContext _context;
+    private readonly ILogger<NeoSyncService> _logger;
 
-    public NeoSyncService(HttpClient client, NeoContext context)
+    public NeoSyncService(HttpClient client, NeoContext context, ILogger<NeoSyncService> logger)
     {
         _client = client;
         _context = context;
+        _logger = logger;
     }
 
     public async Task FetchAndSyncAsync(CancellationToken cancellationToken = default)
@@ -27,8 +29,12 @@ public class NeoSyncService
 
         if (feed?.NearEarthObjects is null)
         {
+            _logger.LogWarning("NASA feed returned no near earth objects.");
             return;
         }
+
+        var insertedCount = 0;
+        var updatedCount = 0;
 
         foreach (var day in feed.NearEarthObjects)
         {
@@ -63,6 +69,7 @@ public class NeoSyncService
                     existing.IsPotentiallyHazardous = obj.IsHazardous;
                     existing.RelativeVelocityKmh = relativeVelocity;
                     existing.MissDistanceKm = missDistance;
+                    updatedCount++;
                     continue;
                 }
 
@@ -79,9 +86,11 @@ public class NeoSyncService
                 };
 
                 _context.NearEarthObjects.Add(neo);
+                insertedCount++;
             }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("NASA NEO sync complete. Inserted: {InsertedCount}, Updated: {UpdatedCount}", insertedCount, updatedCount);
     }
 }
