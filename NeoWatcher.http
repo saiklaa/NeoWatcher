@@ -1,6 +1,8 @@
-@NeoWatcher_HostAddress = http://localhost:5134
+@NasaApiKey = DEMO_KEY
+@StartDate = 2026-07-13
+@EndDate = 2026-07-16
 
-GET {{NeoWatcher_HostAddress}}/weatherforecast/
+GET https://api.nasa.gov/neo/rest/v1/feed?start_date={{StartDate}}&end_date={{EndDate}}&api_key={{NasaApiKey}}
 Accept: application/json
 
 ###
