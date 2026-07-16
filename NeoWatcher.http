@@ -1,0 +1,6 @@
+@NeoWatcher_HostAddress = http://localhost:5134
+
+GET {{NeoWatcher_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
