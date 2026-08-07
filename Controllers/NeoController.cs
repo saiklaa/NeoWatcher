@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NeoWatcher.Models;
 using NeoWatcher.Dto;
+using NeoWatcher.Services;
 
 namespace NeoWatcher.Controllers;
 
