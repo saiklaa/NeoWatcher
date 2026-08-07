@@ -1,4 +1,4 @@
-using System.Globalization;
+    using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NeoWatcher.Models;
@@ -8,39 +8,16 @@ namespace NeoWatcher.Controllers;
 
 public class NeoController : Controller
 {
-    private readonly NeoContext _db;
+    private readonly NeoStatsCalculator _calculator;
 
-    public NeoController(NeoContext db) => _db = db;
+    public NeoController(NeoStatsCalculator calculator) => _calculator = calculator;
 
     public async Task<IActionResult> Index([FromQuery] NeoFilterViewModel filter)
     {
-        var query = _db.NearEarthObjects.AsQueryable();
+        var grouped = await _calculator.GetStatsForViewAsync(filter ?? new NeoFilterViewModel());
 
-        if (filter.From.HasValue)
-            query = query.Where(x => x.CloseApproachDate >= filter.From.Value.Date);
-        if (filter.To.HasValue)
-            query = query.Where(x => x.CloseApproachDate <= filter.To.Value.Date);
-        if (filter.Hazardous.HasValue)
-            query = query.Where(x => x.IsPotentiallyHazardous == filter.Hazardous.Value);
-        if (filter.MinDiameter.HasValue)
-            query = query.Where(x => x.EstimatedDiameterMax >= filter.MinDiameter.Value);
-        if (filter.MaxDiameter.HasValue)
-            query = query.Where(x => x.EstimatedDiameterMin <= filter.MaxDiameter.Value);
-
-        var grouped = await query
-            .GroupBy(x => x.CloseApproachDate.Date)
-            .Select(g => new NeoStatViewModel
-            {
-                Date = g.Key,
-                ObjectCount = g.Count(),
-                MaxDiameter = g.Max(x => x.EstimatedDiameterMax),
-                AvgVelocity = g.Average(x => x.RelativeVelocityKmh),
-                HasHazardousObjects = g.Any(x => x.IsPotentiallyHazardous)
-            })
-            .ToListAsync();
-
-        // apply simple sort via shared sorter
-        grouped = NeoWatcher.Services.NeoStatsSorter.ApplySort(grouped, filter?.SortBy, filter?.SortDir);
+        // apply simple sort via shared sorter for ViewModel
+        grouped = NeoStatsSorter.ApplySort(grouped, filter?.SortBy, filter?.SortDir);
 
         ViewBag.Filter = filter ?? new NeoFilterViewModel();
         return View(grouped);

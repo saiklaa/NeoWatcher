@@ -10,12 +10,12 @@ namespace NeoWatcher.Controllers;
 [Route("api/neo")]
 public sealed class NeoStatsController : ControllerBase
 {
-	private readonly NeoContext _context;
+	private readonly NeoStatsCalculator _calculator;
 	private readonly IMemoryCache _cache;
 
-	public NeoStatsController(NeoContext context, IMemoryCache cache)
+	public NeoStatsController(NeoStatsCalculator calculator, IMemoryCache cache)
 	{
-		_context = context;
+		_calculator = calculator;
 		_cache = cache;
 	}
 
@@ -30,48 +30,7 @@ public sealed class NeoStatsController : ControllerBase
 			return Ok(cached);
 		}
 
-		var neos = _context.NearEarthObjects.AsNoTracking();
-
-		if (query.From.HasValue)
-		{
-			neos = neos.Where(x => x.CloseApproachDate >= query.From.Value.Date);
-		}
-
-		if (query.To.HasValue)
-		{
-			neos = neos.Where(x => x.CloseApproachDate < query.To.Value.Date.AddDays(1));
-		}
-
-		if (query.Hazardous.HasValue)
-		{
-			neos = neos.Where(x => x.IsPotentiallyHazardous == query.Hazardous.Value);
-		}
-
-		if (query.MinDiameter.HasValue)
-		{
-			neos = neos.Where(x => x.EstimatedDiameterMax >= query.MinDiameter.Value);
-		}
-
-		if (query.MaxDiameter.HasValue)
-		{
-			neos = neos.Where(x => x.EstimatedDiameterMin <= query.MaxDiameter.Value);
-		}
-
-		var filtered = await neos.ToListAsync(cancellationToken);
-
-		var stats = filtered
-			.GroupBy(x => x.CloseApproachDate.Date)
-			.Select(group => new NeoStatResponse
-			{
-				Date = group.Key,
-				ObjectCount = group.Count(),
-				MaxDiameter = group.Max(x => x.EstimatedDiameterMax),
-				AvgVelocity = group.Average(x => x.RelativeVelocityKmh),
-				HasHazardousObjects = group.Any(x => x.IsPotentiallyHazardous)
-			})
-			.ToList();
-
-		stats = ApplySort(stats, query.Sort, query.Order);
+		var stats = await _calculator.GetStatsAsync(query, cancellationToken);
 
 		_cache.Set(cacheKey, stats, new MemoryCacheEntryOptions
 		{

@@ -13,6 +13,7 @@ public class NeoContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<NearEarthObject>().HasKey(x => x.Id);
+        modelBuilder.Entity<NearEarthObject>().HasIndex(x => x.CloseApproachDate);
         base.OnModelCreating(modelBuilder);
     }
 }

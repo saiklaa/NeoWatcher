@@ -8,12 +8,14 @@ public class NeoSyncService
     private readonly HttpClient _client;
     private readonly NeoContext _context;
     private readonly ILogger<NeoSyncService> _logger;
+    private readonly IConfiguration _config;
 
-    public NeoSyncService(HttpClient client, NeoContext context, ILogger<NeoSyncService> logger)
+    public NeoSyncService(HttpClient client, NeoContext context, ILogger<NeoSyncService> logger, IConfiguration config)
     {
         _client = client;
         _context = context;
         _logger = logger;
+        _config = config;
     }
 
     public async Task FetchAndSyncAsync(CancellationToken cancellationToken = default)
@@ -21,7 +23,8 @@ public class NeoSyncService
         var start = DateTime.UtcNow.Date.AddDays(-3);
         var end = DateTime.UtcNow.Date;
 
-        var url = $"https://api.nasa.gov/neo/rest/v1/feed?start_date={start:yyyy-MM-dd}&end_date={end:yyyy-MM-dd}&api_key=DEMO_KEY";
+        var apiKey = _config["Nasa:ApiKey"] ?? "DEMO_KEY";
+        var url = $"https://api.nasa.gov/neo/rest/v1/feed?start_date={start:yyyy-MM-dd}&end_date={end:yyyy-MM-dd}&api_key={apiKey}";
         var response = await _client.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
 
@@ -36,6 +39,12 @@ public class NeoSyncService
 
         var insertedCount = 0;
         var updatedCount = 0;
+
+        // Batch existing items to avoid N+1 queries
+        var incomingIds = feed.NearEarthObjects.SelectMany(d => d.Value).Select(o => o.Id).Distinct().ToList();
+        var existingMap = await _context.NearEarthObjects
+            .Where(x => incomingIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
 
         foreach (var day in feed.NearEarthObjects)
         {
@@ -56,7 +65,7 @@ public class NeoSyncService
                     continue;
                 }
 
-                var existing = await _context.NearEarthObjects.FindAsync(new object[] { obj.Id }, cancellationToken);
+                existingMap.TryGetValue(obj.Id, out var existing);
                 var relativeVelocity = double.TryParse(approach.RelativeVelocity.KmH, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedVelocity)
                     ? parsedVelocity
                     : 0;

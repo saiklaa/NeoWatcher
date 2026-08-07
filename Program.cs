@@ -3,10 +3,11 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
 builder.Services.AddControllersWithViews();
 builder.Services.AddMemoryCache();
 builder.Services.AddOpenApi();
+builder.Services.AddHttpClient<NeoSyncService>();
+builder.Services.AddSingleton<NeoStatsCalculator>();
 builder.Services.AddHttpClient<NeoSyncService>();
 if (builder.Environment.IsDevelopment())
 {
@@ -53,7 +54,13 @@ await using (var scope = app.Services.CreateAsyncScope())
 	catch (Exception ex)
 	{
 		var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-		logger.LogWarning(ex, "Database migration failed — continuing without migration (likely DB unavailable locally). Proceed with caution.");
+		logger.LogWarning(ex, "Database migration failed — continuing without migration.");
+		if (!app.Environment.IsDevelopment())
+		{
+			// in production we should not silently continue when migrations fail
+			logger.LogError("Migrations failed in non-development environment, aborting startup.");
+			throw;
+		}
 	}
 }
 
