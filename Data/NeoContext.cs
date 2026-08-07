@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NeoWatcher.Models;
 
 public class NeoContext : DbContext
 {

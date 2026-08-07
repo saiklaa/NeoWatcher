@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using NeoWatcher.Models;
 
 public class NeoSyncService
 {
