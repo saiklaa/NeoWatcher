@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 
+namespace NeoWatcher.Models;
+
 public sealed class NeoFeedResponse
 {
     [JsonPropertyName("near_earth_objects")]
