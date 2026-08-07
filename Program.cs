@@ -7,8 +7,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddMemoryCache();
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient<NeoSyncService>();
-builder.Services.AddSingleton<NeoStatsCalculator>();
-builder.Services.AddHttpClient<NeoSyncService>();
+builder.Services.AddScoped<NeoStatsCalculator>();
 if (builder.Environment.IsDevelopment())
 {
 	builder.Services.AddDbContext<NeoContext>(options => options.UseInMemoryDatabase("NeoWatcherInMemory"));

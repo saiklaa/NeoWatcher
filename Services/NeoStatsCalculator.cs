@@ -52,25 +52,27 @@ public class NeoStatsCalculator
             })
             .ToListAsync(cancellationToken);
 
-        // sort
-        stats = NeoWatcher.Services.NeoStatsSorter.ApplySort(stats.Select(s => new NeoWatcher.Models.NeoStatViewModel {
-            Date = s.Date,
-            ObjectCount = s.ObjectCount,
-            MaxDiameter = s.MaxDiameter,
-            AvgVelocity = s.AvgVelocity,
-            HasHazardousObjects = s.HasHazardousObjects
-        }).ToList(), query.Sort.ToString().ToLowerInvariant(), query.Order.ToString().ToLowerInvariant())
-            .Select(vm => new NeoStatResponse
-            {
-                Date = vm.Date,
-                ObjectCount = vm.ObjectCount,
-                MaxDiameter = vm.MaxDiameter,
-                AvgVelocity = vm.AvgVelocity,
-                HasHazardousObjects = vm.HasHazardousObjects
-            })
-            .ToList();
+        // apply typed sort (enum-based, not string-based)
+        return ApplySort(stats, query.Sort, query.Order);
+    }
 
-        return stats;
+    /// <summary>
+    /// Apply sort to stats using enum-based switch (proper type safety, supports all 4 sort fields).
+    /// </summary>
+    private static List<NeoStatResponse> ApplySort(List<NeoStatResponse> stats, NeoStatsSortBy sortBy, NeoSortOrder sortOrder)
+    {
+        IOrderedEnumerable<NeoStatResponse> OrderBy<TKey>(Func<NeoStatResponse, TKey> keySelector) =>
+            sortOrder == NeoSortOrder.Desc
+                ? stats.OrderByDescending(keySelector)
+                : stats.OrderBy(keySelector);
+
+        return sortBy switch
+        {
+            NeoStatsSortBy.ObjectCount => OrderBy(x => x.ObjectCount).ToList(),
+            NeoStatsSortBy.MaxDiameter => OrderBy(x => x.MaxDiameter).ToList(),
+            NeoStatsSortBy.AvgVelocity => OrderBy(x => x.AvgVelocity).ToList(),
+            _ => OrderBy(x => x.Date).ToList()
+        };
     }
 
     public async Task<List<NeoStatViewModel>> GetStatsForViewAsync(NeoFilterViewModel filter, CancellationToken cancellationToken = default)
@@ -98,4 +100,5 @@ public class NeoStatsCalculator
             HasHazardousObjects = s.HasHazardousObjects
         }).ToList();
     }
+
 }
