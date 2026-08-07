@@ -46,17 +46,18 @@ volumes:
 	pgdata:
 ```
 
-Run migrations locally against Postgres (once DB is available):
+Start a Postgres instance via Docker Compose:
 
 ```bash
-dotnet ef migrations add Init -p NeoWatcher -s NeoWatcher
-dotnet ef database update -p NeoWatcher -s NeoWatcher
+docker compose up -d
 ```
 
-Submission checklist:
+Example connection string (appsettings.json):
 
-- [ ] Build succeeds
-- [ ] API endpoint `GET /api/neo/stats` implemented with filtering, grouping, sorting, caching
-- [ ] Swagger docs present
-- [ ] UI at `/Neo` renders stats table
-- [ ] Unit & integration tests in `NeoWatcher.Tests`
+```json
+"ConnectionStrings": {
+	"NeoDb": "Host=localhost;Port=5432;Database=neowatcher;Username=neo;Password=neo"
+}
+```
+
+When Postgres is available the app will attempt to run migrations on startup (Development uses InMemory DB by default).
