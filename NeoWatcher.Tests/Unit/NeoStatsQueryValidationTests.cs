@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using NeoWatcher.Dto;
 using Xunit;
 

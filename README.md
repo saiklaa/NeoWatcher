@@ -1,12 +1,14 @@
 # NeoWatcher
 
-NEO Watcher — small ASP.NET Core app that syncs Near-Earth Object data from NASA and exposes an API and UI for daily aggregated stats.
+NEO Watcher is a small ASP.NET Core application that syncs Near-Earth Object data from NASA and exposes an API and UI for daily aggregated statistics.
 
-How to run (Development):
+## Run locally
+
+From the repository root:
 
 ```bash
-dotnet build
-dotnet run --project NeoWatcher --urls http://localhost:5000
+dotnet build ./NeoWatcher/NeoWatcher.csproj
+dotnet run --project ./NeoWatcher/NeoWatcher.csproj --urls http://localhost:5000
 ```
 
 Open:
@@ -15,49 +17,48 @@ Open:
 - Swagger/OpenAPI: http://localhost:5000/openapi
 - UI: http://localhost:5000/Neo
 
-Tests:
+## Tests
 
 ```bash
-dotnet test NeoWatcher/NeoWatcher.Tests
+dotnet test ./NeoWatcher.Tests/NeoWatcher.Tests.csproj
 ```
 
-Notes:
+## Notes
 
-- In Development the app uses an in-memory EF provider so you can run without PostgreSQL.
-- For production configure `ConnectionStrings:NeoDb` and ensure migrations are applied.
+- In development the app uses an in-memory EF provider, so PostgreSQL is not required.
+- For production, configure the `ConnectionStrings:NeoDb` setting and ensure migrations are applied.
 
-Postgres (docker-compose)
+## PostgreSQL with Docker Compose
 
 ```yaml
-version: '3.8'
 services:
-	db:
-		image: postgres:15
-		environment:
-			POSTGRES_USER: neo
-			POSTGRES_PASSWORD: neo
-			POSTGRES_DB: neowatcher
-		ports:
-			- "5432:5432"
-		volumes:
-			- pgdata:/var/lib/postgresql/data
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: neo
+      POSTGRES_PASSWORD: neo
+      POSTGRES_DB: neowatcher
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
-	pgdata:
+  pgdata:
 ```
 
-Start a Postgres instance via Docker Compose:
+Start it with:
 
 ```bash
 docker compose up -d
 ```
 
-Example connection string (appsettings.json):
+Example connection string:
 
 ```json
 "ConnectionStrings": {
-	"NeoDb": "Host=localhost;Port=5432;Database=neowatcher;Username=neo;Password=neo"
+  "NeoDb": "Host=localhost;Port=5432;Database=neowatcher;Username=neo;Password=neo"
 }
 ```
 
-When Postgres is available the app will attempt to run migrations on startup (Development uses InMemory DB by default).
+When PostgreSQL is available, the app attempts to run migrations on startup. In development, the in-memory database is used by default.

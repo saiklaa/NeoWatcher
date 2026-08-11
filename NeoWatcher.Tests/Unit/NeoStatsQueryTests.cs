@@ -1,4 +1,3 @@
-using System;
 using NeoWatcher.Dto;
 using Xunit;
 

@@ -1,17 +1,8 @@
-using System.Linq;
 using System.Text.Json;
-using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
-
-namespace NeoWatcher.Tests.Integration;
-
-public record NeoStatResponseDto(
-    System.DateTime Date,
-    int ObjectCount,
-    double MaxDiameter,
-    double AvgVelocity,
-    bool HasHazardousObjects);
+using Microsoft.AspNetCore.Mvc.Testing;
+using NeoWatcher.Dto;
+using FluentAssertions;
 
 public class NeoStatsEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -27,7 +18,7 @@ public class NeoStatsEndpointTests : IClassFixture<WebApplicationFactory<Program
         res.EnsureSuccessStatusCode();
 
         var json = await res.Content.ReadAsStringAsync();
-        var docs = JsonSerializer.Deserialize<NeoStatResponseDto[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var docs = JsonSerializer.Deserialize<NeoStatResponse[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         docs.Should().NotBeNull();
         docs!.Length.Should().BeGreaterThan(0);
@@ -44,7 +35,7 @@ public class NeoStatsEndpointTests : IClassFixture<WebApplicationFactory<Program
         res.EnsureSuccessStatusCode();
 
         var json = await res.Content.ReadAsStringAsync();
-        var docs = JsonSerializer.Deserialize<NeoStatResponseDto[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var docs = JsonSerializer.Deserialize<NeoStatResponse[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         docs.Should().NotBeNull();
         docs!.Length.Should().BeGreaterThan(1);
@@ -61,7 +52,7 @@ public class NeoStatsEndpointTests : IClassFixture<WebApplicationFactory<Program
         res.EnsureSuccessStatusCode();
 
         var json = await res.Content.ReadAsStringAsync();
-        var docs = JsonSerializer.Deserialize<NeoStatResponseDto[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var docs = JsonSerializer.Deserialize<NeoStatResponse[]>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         docs.Should().NotBeNull();
         docs!.Length.Should().BeGreaterThan(1);
@@ -69,3 +60,4 @@ public class NeoStatsEndpointTests : IClassFixture<WebApplicationFactory<Program
         var diameters = docs.Select(d => d.MaxDiameter).ToArray();
         diameters.Should().BeInAscendingOrder();
     }
+}
