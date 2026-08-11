@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using NeoWatcher.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,14 +8,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddMemoryCache();
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient<NeoSyncService>();
-if (builder.Environment.IsDevelopment())
-{
-	builder.Services.AddDbContext<NeoContext>(options => options.UseInMemoryDatabase("NeoWatcherInMemory"));
-}
-else
-{
-	builder.Services.AddDbContext<NeoContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("NeoDb")));
-}
+
+
+builder.Services.AddDbContext<NeoContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("NeoDb")));
+
 builder.Services.AddHostedService<NeoSyncJob>();
 
 var app = builder.Build();
@@ -55,7 +52,6 @@ await using (var scope = app.Services.CreateAsyncScope())
 		logger.LogWarning(ex, "Database migration failed — continuing without migration.");
 		if (!app.Environment.IsDevelopment())
 		{
-			// in production we should not silently continue when migrations fail
 			logger.LogError("Migrations failed in non-development environment, aborting startup.");
 			throw;
 		}
