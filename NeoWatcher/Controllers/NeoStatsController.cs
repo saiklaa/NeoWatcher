@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using NeoWatcher.Dto;
 using NeoWatcher.Models;
@@ -39,20 +38,5 @@ public sealed class NeoStatsController : ControllerBase
 		});
 
 		return Ok(stats);
-	}
-
-	private static List<NeoStatResponse> ApplySort(List<NeoStatResponse> stats, NeoStatsSortBy sort, NeoSortOrder order)
-	{
-		return (sort, order) switch
-		{
-			(NeoStatsSortBy.Date, NeoSortOrder.Desc) => stats.OrderByDescending(x => x.Date).ToList(),
-			(NeoStatsSortBy.ObjectCount, NeoSortOrder.Desc) => stats.OrderByDescending(x => x.ObjectCount).ToList(),
-			(NeoStatsSortBy.MaxDiameter, NeoSortOrder.Desc) => stats.OrderByDescending(x => x.MaxDiameter).ToList(),
-			(NeoStatsSortBy.AvgVelocity, NeoSortOrder.Desc) => stats.OrderByDescending(x => x.AvgVelocity).ToList(),
-			(NeoStatsSortBy.ObjectCount, _) => stats.OrderBy(x => x.ObjectCount).ToList(),
-			(NeoStatsSortBy.MaxDiameter, _) => stats.OrderBy(x => x.MaxDiameter).ToList(),
-			(NeoStatsSortBy.AvgVelocity, _) => stats.OrderBy(x => x.AvgVelocity).ToList(),
-			_ => stats.OrderBy(x => x.Date).ToList()
-		};
 	}
 }
