@@ -25,7 +25,10 @@ dotnet test ./NeoWatcher.Tests/NeoWatcher.Tests.csproj
 
 ## Notes
 
-- For production, configure the `ConnectionStrings:NeoDb` setting and ensure migrations are applied.
+## Notes
+
+- The app uses PostgreSQL in all environments — no in-memory provider. Make sure `ConnectionStrings:NeoDb` points to a running Postgres instance (see Docker Compose section below) before starting the app.
+- Migrations are applied automatically on startup.
 
 ## PostgreSQL with Docker Compose
 
