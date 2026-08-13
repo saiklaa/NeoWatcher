@@ -33,15 +33,21 @@ dotnet test ./NeoWatcher.Tests/NeoWatcher.Tests.csproj
 ```yaml
 services:
   db:
-    image: postgres:15
+    image: postgres:16-alpine
     environment:
-      POSTGRES_USER: neo
-      POSTGRES_PASSWORD: neo
-      POSTGRES_DB: neowatcher
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: NeoWatcher
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d NeoWatcher"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pgdata:
@@ -57,8 +63,6 @@ Example connection string:
 
 ```json
 "ConnectionStrings": {
-  "NeoDb": "Host=localhost;Port=5432;Database=neowatcher;Username=neo;Password=neo"
+  "NeoDb": "Host=localhost;Port=5432;Database=NeoWatcher;Username=postgres;Password=postgres"
 }
 ```
-
-When PostgreSQL is available, the app attempts to run migrations on startup. In development, the in-memory database is used by default.
