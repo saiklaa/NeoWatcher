@@ -25,7 +25,6 @@ dotnet test ./NeoWatcher.Tests/NeoWatcher.Tests.csproj
 
 ## Notes
 
-- In development the app uses an in-memory EF provider, so PostgreSQL is not required.
 - For production, configure the `ConnectionStrings:NeoDb` setting and ensure migrations are applied.
 
 ## PostgreSQL with Docker Compose
