@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using NeoWatcher.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
