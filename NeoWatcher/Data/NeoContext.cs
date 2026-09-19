@@ -18,6 +18,8 @@ public class NeoContext : DbContext
 
         modelBuilder.Entity<CloseApproach>().HasKey(x => x.Id);
         modelBuilder.Entity<CloseApproach>()
+            .HasIndex(x => x.CloseApproachDate);
+        modelBuilder.Entity<CloseApproach>()
             .HasIndex(x => new { x.AsteroidId, x.CloseApproachDate })
             .IsUnique();
         modelBuilder.Entity<CloseApproach>()
