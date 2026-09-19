@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddMemoryCache();
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient<NeoSyncService>();
+builder.Services.AddScoped<NeoWatcher.Services.NeoStatsCalculator>();
 
 
 builder.Services.AddDbContext<NeoContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("NeoDb")));

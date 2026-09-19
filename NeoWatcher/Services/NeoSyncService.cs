@@ -40,67 +40,71 @@ public class NeoSyncService
         var insertedCount = 0;
         var updatedCount = 0;
 
-        // Batch existing items to avoid N+1 queries
         var incomingIds = feed.NearEarthObjects.SelectMany(d => d.Value).Select(o => o.Id).Distinct().ToList();
-        var existingMap = await _context.NearEarthObjects
+        var existingAsteroids = await _context.Asteroids
             .Where(x => incomingIds.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, cancellationToken);
+        var existingApproaches = await _context.CloseApproaches
+            .Where(x => incomingIds.Contains(x.AsteroidId))
+            .ToDictionaryAsync(x => (x.AsteroidId, x.CloseApproachDate), cancellationToken);
 
         foreach (var day in feed.NearEarthObjects)
         {
             foreach (var obj in day.Value)
             {
-                var approach = obj.CloseApproachData.FirstOrDefault();
-                if (approach is null)
+                if (!existingAsteroids.TryGetValue(obj.Id, out var asteroid))
                 {
-                    continue;
+                    asteroid = new Asteroid { Id = obj.Id };
+                    _context.Asteroids.Add(asteroid);
+                    existingAsteroids.Add(obj.Id, asteroid);
                 }
 
-                if (!DateTime.TryParse(
-                    approach.CloseApproachDate,
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                    out var closeApproachDate))
+                asteroid.Name = obj.Name;
+                asteroid.EstimatedDiameterMin = obj.EstimatedDiameter.Meters.EstimatedDiameterMin;
+                asteroid.EstimatedDiameterMax = obj.EstimatedDiameter.Meters.EstimatedDiameterMax;
+                asteroid.IsPotentiallyHazardous = obj.IsHazardous;
+
+                foreach (var approach in obj.CloseApproachData)
                 {
-                    continue;
+                    if (!DateTime.TryParse(
+                        approach.CloseApproachDate,
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                        out var closeApproachDate))
+                    {
+                        continue;
+                    }
+
+                    var relativeVelocity = double.TryParse(approach.RelativeVelocity.KmH, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedVelocity)
+                        ? parsedVelocity
+                        : 0;
+
+                    var missDistance = double.TryParse(approach.MissDistance.Kilometers, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedDistance)
+                        ? parsedDistance
+                        : 0;
+
+                    var approachKey = (obj.Id, closeApproachDate);
+                    if (existingApproaches.TryGetValue(approachKey, out var existing))
+                    {
+                        existing.CloseApproachDate = closeApproachDate;
+                        existing.RelativeVelocityKmh = relativeVelocity;
+                        existing.MissDistanceKm = missDistance;
+                        updatedCount++;
+                        continue;
+                    }
+
+                    var closeApproach = new CloseApproach
+                    {
+                        AsteroidId = obj.Id,
+                        CloseApproachDate = closeApproachDate,
+                        RelativeVelocityKmh = relativeVelocity,
+                        MissDistanceKm = missDistance
+                    };
+
+                    _context.CloseApproaches.Add(closeApproach);
+                    existingApproaches.Add(approachKey, closeApproach);
+                    insertedCount++;
                 }
-
-                existingMap.TryGetValue(obj.Id, out var existing);
-                var relativeVelocity = double.TryParse(approach.RelativeVelocity.KmH, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedVelocity)
-                    ? parsedVelocity
-                    : 0;
-
-                var missDistance = double.TryParse(approach.MissDistance.Kilometers, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedDistance)
-                    ? parsedDistance
-                    : 0;
-
-                if (existing is not null)
-                {
-                    existing.Name = obj.Name;
-                    existing.CloseApproachDate = closeApproachDate;
-                    existing.EstimatedDiameterMin = obj.EstimatedDiameter.Meters.EstimatedDiameterMin;
-                    existing.EstimatedDiameterMax = obj.EstimatedDiameter.Meters.EstimatedDiameterMax;
-                    existing.IsPotentiallyHazardous = obj.IsHazardous;
-                    existing.RelativeVelocityKmh = relativeVelocity;
-                    existing.MissDistanceKm = missDistance;
-                    updatedCount++;
-                    continue;
-                }
-
-                var neo = new NearEarthObject
-                {
-                    Id = obj.Id,
-                    Name = obj.Name,
-                    CloseApproachDate = closeApproachDate,
-                    EstimatedDiameterMin = obj.EstimatedDiameter.Meters.EstimatedDiameterMin,
-                    EstimatedDiameterMax = obj.EstimatedDiameter.Meters.EstimatedDiameterMax,
-                    IsPotentiallyHazardous = obj.IsHazardous,
-                    RelativeVelocityKmh = relativeVelocity,
-                    MissDistanceKm = missDistance
-                };
-
-                _context.NearEarthObjects.Add(neo);
-                insertedCount++;
             }
         }
 

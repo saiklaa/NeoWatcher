@@ -12,7 +12,9 @@ public class NeoStatsCalculator
 
     public async Task<List<NeoStatResponse>> GetStatsAsync(NeoStatsQuery query, CancellationToken cancellationToken = default)
     {
-        var neos = _db.NearEarthObjects.AsNoTracking();
+        var neos = _db.CloseApproaches
+            .Include(x => x.Asteroid)
+            .AsNoTracking();
 
         if (query.From.HasValue)
         {
@@ -27,17 +29,17 @@ public class NeoStatsCalculator
 
         if (query.Hazardous.HasValue)
         {
-            neos = neos.Where(x => x.IsPotentiallyHazardous == query.Hazardous.Value);
+            neos = neos.Where(x => x.Asteroid.IsPotentiallyHazardous == query.Hazardous.Value);
         }
 
         if (query.MinDiameter.HasValue)
         {
-            neos = neos.Where(x => x.EstimatedDiameterMax >= query.MinDiameter.Value);
+            neos = neos.Where(x => x.Asteroid.EstimatedDiameterMax >= query.MinDiameter.Value);
         }
 
         if (query.MaxDiameter.HasValue)
         {
-            neos = neos.Where(x => x.EstimatedDiameterMin <= query.MaxDiameter.Value);
+            neos = neos.Where(x => x.Asteroid.EstimatedDiameterMin <= query.MaxDiameter.Value);
         }
 
         var stats = await neos
@@ -46,9 +48,9 @@ public class NeoStatsCalculator
             {
                 Date = g.Key,
                 ObjectCount = g.Count(),
-                MaxDiameter = g.Max(x => x.EstimatedDiameterMax),
+                MaxDiameter = g.Max(x => x.Asteroid.EstimatedDiameterMax),
                 AvgVelocity = g.Average(x => x.RelativeVelocityKmh),
-                HasHazardousObjects = g.Any(x => x.IsPotentiallyHazardous)
+                HasHazardousObjects = g.Any(x => x.Asteroid.IsPotentiallyHazardous)
             })
             .ToListAsync(cancellationToken);
 

@@ -64,24 +64,3 @@ public sealed class MissDistance
     [JsonPropertyName("kilometers")]
     public string Kilometers { get; set; } = string.Empty;
 }
-
-public sealed class NearEarthObject
-{
-    public string Id { get; set; } = string.Empty;
-
-    public string Name { get; set; } = string.Empty;
-
-    public DateTime CloseApproachDate { get; set; }
-
-    public double EstimatedDiameterMin { get; set; }
-
-    public double EstimatedDiameterMax { get; set; }
-
-    public bool IsPotentiallyHazardous { get; set; }
-
-    public double RelativeVelocityKmh { get; set; }
-
-    public double MissDistanceKm { get; set; }
-
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-}
